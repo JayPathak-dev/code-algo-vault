@@ -1,0 +1,23 @@
+name: Deploy Code & Algo Vault to AWS
+
+# This tells GitHub to run this workflow whenever you push to the 'main' branch
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Securely SSH into AWS and Deploy
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USERNAME }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            cd code-algo-vault
+            git pull origin main
+            docker compose up --build -d

@@ -13,7 +13,7 @@ function App() {
 
   return (
     <div style={{ padding: '40px', fontFamily: 'sans-serif', maxWidth: '800px', margin: 'auto' }}>
-      <h1>Code & Algo Vault</h1>
+      <h1>Code & Algo Vault 2.0</h1>
       <p>Data fetched directly from the Node.js backend API:</p>
       
       {snippets.length === 0 ? (
