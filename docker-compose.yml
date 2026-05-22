@@ -1,10 +1,10 @@
-version: '3.8'
-
 services:
   backend:
     build: ./backend
-    # We removed the ports mapping here! 
-    # It is now safely hidden inside the Docker network.
+    depends_on:
+      - db
+    environment:
+      - DATABASE_URL=postgres://vault_user:vault_password@db:5432/vault_db
 
   frontend:
     build: ./frontend
@@ -12,3 +12,16 @@ services:
       - "8080:80"
     depends_on:
       - backend
+
+  db:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: vault_user
+      POSTGRES_PASSWORD: vault_password
+      POSTGRES_DB: vault_db
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    # We removed the ports mapping here!
+
+volumes:
+  pgdata:
