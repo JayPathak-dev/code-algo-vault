@@ -20,4 +20,4 @@ jobs:
           script: |
             cd code-algo-vault
             git pull origin main
-            docker compose up --build -d
+            VITE_CLERK_PUBLISHABLE_KEY=${{ secrets.VITE_CLERK_PUBLISHABLE_KEY }} docker compose up --build -d

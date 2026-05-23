@@ -3,6 +3,7 @@ import axios from 'axios';
 import EditorPkg from 'react-simple-code-editor';
 import Prism from 'prismjs';
 import { FaTrash, FaEdit, FaPlus, FaSearch, FaSave, FaTimes } from 'react-icons/fa';
+import { UserButton } from "@clerk/clerk-react";
 import 'prismjs/components/prism-clike';
 import 'prismjs/components/prism-javascript';
 import 'prismjs/components/prism-c';
@@ -119,9 +120,14 @@ function App() {
       <div style={{ width: '300px', backgroundColor: '#18181c', borderRight: '1px solid #2a2a35', display: 'flex', flexDirection: 'column' }}>
         
         <div style={{ padding: '20px' }}>
-          <h2 style={{ margin: '0 0 20px 0', fontSize: '1.2rem', display: 'flex', alignItems: 'center', gap: '10px' }}>
-            Vault <span style={{ fontSize: '0.8rem', background: '#3b82f6', padding: '2px 8px', borderRadius: '12px' }}>{snippets.length}</span>
-          </h2>
+          
+          {/* UPDATED HEADER WITH CLERK USER BUTTON */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+            <h2 style={{ margin: 0, fontSize: '1.2rem', display: 'flex', alignItems: 'center', gap: '10px' }}>
+              Vault <span style={{ fontSize: '0.8rem', background: '#3b82f6', padding: '2px 8px', borderRadius: '12px' }}>{snippets.length}</span>
+            </h2>
+            <UserButton />
+          </div>
           
           <button onClick={resetForm} style={{ width: '100%', padding: '10px', backgroundColor: '#2563eb', color: '#fff', border: 'none', borderRadius: '6px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', fontWeight: 'bold', marginBottom: '15px' }}>
             <FaPlus /> New Snippet

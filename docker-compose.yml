@@ -1,27 +1,38 @@
-services:
-  backend:
-    build: ./backend
-    depends_on:
-      - db
-    environment:
-      - DATABASE_URL=postgres://vault_user:vault_password@db:5432/vault_db
+version: '3.8'
 
+services:
   frontend:
-    build: ./frontend
+    build:
+      context: ./frontend
+      args:
+        - VITE_CLERK_PUBLISHABLE_KEY=${VITE_CLERK_PUBLISHABLE_KEY}
     ports:
-      - "8080:80"
+      - "80:80" # Maps port 80 on your EC2 instance to port 80 inside the container
     depends_on:
       - backend
 
+  backend:
+    build:
+      context: ./backend
+    ports:
+      - "5001:5001"
+    env_file:
+      - .env
+    environment:
+      # This connects the Node API to the Postgres container automatically
+      - DATABASE_URL=postgres://vault_user:vault_password@db:5432/vault_db
+    depends_on:
+      - db
+
   db:
     image: postgres:15-alpine
+    restart: always
     environment:
       POSTGRES_USER: vault_user
       POSTGRES_PASSWORD: vault_password
       POSTGRES_DB: vault_db
     volumes:
       - pgdata:/var/lib/postgresql/data
-    # We removed the ports mapping here!
 
 volumes:
   pgdata:
