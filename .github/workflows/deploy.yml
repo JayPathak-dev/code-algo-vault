@@ -12,21 +12,28 @@ jobs:
     steps:
       - name: Securely SSH into AWS and Deploy
         uses: appleboy/ssh-action@v1.0.3
-        # We must explicitly pass the secret down into the SSH environment
         env:
           CLERK_KEY: ${{ secrets.VITE_CLERK_PUBLISHABLE_KEY }}
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USERNAME }}
           key: ${{ secrets.EC2_SSH_KEY }}
-          # Pass the env variable into the script
           envs: CLERK_KEY
           script: |
             cd code-algo-vault
-            git pull origin main
             
-            # Explicitly export the key so docker-compose can see it
+            # 1. Force the server to exactly match GitHub's main branch
+            git fetch --all
+            git reset --hard origin/main
+            
+            # 2. Export the secret for Docker
             export VITE_CLERK_PUBLISHABLE_KEY=$CLERK_KEY
             
+            # 3. Shut down current containers
             docker compose down
-            docker compose up --build -d
+            
+            # 4. Rebuild from absolute scratch (no cache!)
+            docker compose build --no-cache
+            
+            # 5. Start the fresh containers
+            docker compose up -d
