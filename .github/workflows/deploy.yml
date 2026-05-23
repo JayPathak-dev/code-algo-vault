@@ -1,6 +1,5 @@
 name: Deploy Code & Algo Vault to AWS
 
-# This tells GitHub to run this workflow whenever you push to the 'main' branch
 on:
   push:
     branches:
@@ -13,11 +12,21 @@ jobs:
     steps:
       - name: Securely SSH into AWS and Deploy
         uses: appleboy/ssh-action@v1.0.3
+        # We must explicitly pass the secret down into the SSH environment
+        env:
+          CLERK_KEY: ${{ secrets.VITE_CLERK_PUBLISHABLE_KEY }}
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USERNAME }}
           key: ${{ secrets.EC2_SSH_KEY }}
+          # Pass the env variable into the script
+          envs: CLERK_KEY
           script: |
             cd code-algo-vault
             git pull origin main
-            VITE_CLERK_PUBLISHABLE_KEY=${{ secrets.VITE_CLERK_PUBLISHABLE_KEY }} docker compose up --build -d
+            
+            # Explicitly export the key so docker-compose can see it
+            export VITE_CLERK_PUBLISHABLE_KEY=$CLERK_KEY
+            
+            docker compose down
+            docker compose up --build -d
