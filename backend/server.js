@@ -2,7 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const { S3Client, PutObjectCommand } = require('@aws-sdk/client-s3');
 const { getSignedUrl } = require('@aws-sdk/s3-request-presigner');
-const { Pool } = require('pg'); // NEW: Import Postgres driver
+const { Pool } = require('pg');
 require('dotenv').config();
 
 const app = express();
@@ -20,27 +20,28 @@ const s3Client = new S3Client({
     }
 });
 
-// NEW: Initialize Database Connection
+// Initialize Database Connection & Schema
 const pool = new Pool({
-    // Docker automatically translates 'db' to the Postgres container's internal IP!
     connectionString: process.env.DATABASE_URL || 'postgres://vault_user:vault_password@db:5432/vault_db'
 });
 
-// NEW: Auto-create table on startup and insert a test row
 pool.query(`
   CREATE TABLE IF NOT EXISTS snippets (
     id SERIAL PRIMARY KEY,
     title VARCHAR(255) NOT NULL,
-    code TEXT NOT NULL
+    code TEXT NOT NULL,
+    image_url TEXT
   );
+  -- If the table already exists from yesterday, this safely adds the new column!
+  ALTER TABLE snippets ADD COLUMN IF NOT EXISTS image_url TEXT;
 `).then(() => {
-    console.log("Database table verified.");
-    // Insert a dummy row just so we have something to see!
-    pool.query(`INSERT INTO snippets (title, code) VALUES ('Hello DB', 'console.log("Fetched from Postgres!");') ON CONFLICT DO NOTHING;`);
+    console.log("Database table verified with image support.");
 }).catch(err => console.error("Database connection error:", err));
 
 
-// UPDATED Route: Fetch Snippets from the Database
+// --- ROUTES ---
+
+// 1. Fetch Snippets from the Database
 app.get('/api/snippets', async (req, res) => {
     try {
         const result = await pool.query('SELECT * FROM snippets ORDER BY id DESC');
@@ -51,7 +52,23 @@ app.get('/api/snippets', async (req, res) => {
     }
 });
 
-// Existing Route: Generate S3 Upload URL
+// 2. Add a New Snippet to the Database (Now accepts imageUrl)
+app.post('/api/snippets', async (req, res) => {
+    try {
+        const { title, code, imageUrl } = req.body;
+        
+        const result = await pool.query(
+            'INSERT INTO snippets (title, code, image_url) VALUES ($1, $2, $3) RETURNING *',
+            [title, code, imageUrl]
+        );
+        res.status(201).json(result.rows[0]);
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: "Failed to save snippet" });
+    }
+});
+
+// 3. Generate S3 Upload URL
 app.post('/api/upload-url', async (req, res) => {
     try {
         const { fileName, fileType } = req.body;
@@ -70,6 +87,8 @@ app.post('/api/upload-url', async (req, res) => {
     }
 });
 
+// --- SERVER STARTUP ---
+// THIS MUST ALWAYS BE THE VERY LAST THING IN THE FILE!
 app.listen(PORT, () => {
     console.log(`Backend API server running on port ${PORT}`);
 });
