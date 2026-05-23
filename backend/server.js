@@ -52,7 +52,7 @@ app.get('/api/snippets', async (req, res) => {
     }
 });
 
-// 2. Add a New Snippet to the Database (Now accepts imageUrl)
+// 2. Add a New Snippet to the Database
 app.post('/api/snippets', async (req, res) => {
     try {
         const { title, code, imageUrl } = req.body;
@@ -84,6 +84,34 @@ app.post('/api/upload-url', async (req, res) => {
     } catch (error) {
         console.error("Error generating presigned URL:", error);
         res.status(500).json({ error: "Failed to generate upload URL" });
+    }
+});
+
+// 4. UPDATE a Snippet
+app.put('/api/snippets/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { title, code } = req.body;
+        const result = await pool.query(
+            'UPDATE snippets SET title = $1, code = $2 WHERE id = $3 RETURNING *',
+            [title, code, id]
+        );
+        res.json(result.rows[0]);
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: "Failed to update snippet" });
+    }
+});
+
+// 5. DELETE a Snippet
+app.delete('/api/snippets/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        await pool.query('DELETE FROM snippets WHERE id = $1', [id]);
+        res.json({ message: "Snippet deleted successfully" });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: "Failed to delete snippet" });
     }
 });
 
