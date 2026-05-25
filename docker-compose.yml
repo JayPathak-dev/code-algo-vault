@@ -1,38 +1,46 @@
-version: '3.8'
-
 services:
-  frontend:
-    build:
-      context: ./frontend
-      args:
-        - VITE_CLERK_PUBLISHABLE_KEY=${VITE_CLERK_PUBLISHABLE_KEY}
-    ports:
-      - "80:80" # Maps port 80 on your EC2 instance to port 80 inside the container
-    depends_on:
-      - backend
-
-  backend:
-    build:
-      context: ./backend
-    ports:
-      - "5001:5001"
-    env_file:
-      - .env
-    environment:
-      # This connects the Node API to the Postgres container automatically
-      - DATABASE_URL=postgres://vault_user:vault_password@db:5432/vault_db
-    depends_on:
-      - db
-
   db:
     image: postgres:15-alpine
     restart: always
     environment:
-      POSTGRES_USER: vault_user
-      POSTGRES_PASSWORD: vault_password
-      POSTGRES_DB: vault_db
+      - POSTGRES_USER=vault_user
+      - POSTGRES_PASSWORD=vault_password
+      - POSTGRES_DB=vault_db
+    ports:
+      - "5433:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
 
+  backend:
+    build: ./backend
+    ports:
+      - "5002:5002"
+    # --- DNS FIX TO ALLOW PISTON API CONNECTION ---
+    dns:
+      - 8.8.8.8
+      - 8.8.4.4
+    # ----------------------------------------------
+    environment:
+      - DATABASE_URL=postgres://vault_user:vault_password@db:5432/vault_db
+      - AWS_REGION=${AWS_REGION}
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+      - AWS_S3_BUCKET_NAME=${AWS_S3_BUCKET_NAME}
+      - CLERK_SECRET_KEY=${CLERK_SECRET_KEY}
+    depends_on:
+      - db
+
+  frontend:
+    build: 
+      context: ./frontend
+      # THIS IS THE BRIDGE: It pulls from .env and hands to Dockerfile
+      args:
+        VITE_CLERK_PUBLISHABLE_KEY: ${VITE_CLERK_PUBLISHABLE_KEY}
+    ports:
+      - "80:80"
+    environment:
+      - VITE_CLERK_PUBLISHABLE_KEY=${VITE_CLERK_PUBLISHABLE_KEY}
+    depends_on:
+      - backend
 volumes:
   pgdata:
