@@ -15,11 +15,8 @@ services:
     build: ./backend
     ports:
       - "5002:5002"
-    # --- DNS FIX TO ALLOW PISTON API CONNECTION ---
-    dns:
-      - 8.8.8.8
-      - 8.8.4.4
-    # ----------------------------------------------
+    env_file:
+      - .env
     environment:
       - DATABASE_URL=postgres://vault_user:vault_password@db:5432/vault_db
       - AWS_REGION=${AWS_REGION}
@@ -33,7 +30,6 @@ services:
   frontend:
     build: 
       context: ./frontend
-      # THIS IS THE BRIDGE: It pulls from .env and hands to Dockerfile
       args:
         VITE_CLERK_PUBLISHABLE_KEY: ${VITE_CLERK_PUBLISHABLE_KEY}
     ports:
@@ -42,5 +38,6 @@ services:
       - VITE_CLERK_PUBLISHABLE_KEY=${VITE_CLERK_PUBLISHABLE_KEY}
     depends_on:
       - backend
+
 volumes:
   pgdata:

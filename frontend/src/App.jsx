@@ -32,7 +32,7 @@ function App() {
   const [snippetType, setSnippetType] = useState('code'); 
   
   // Execution State
-  const [language, setLanguage] = useState('javascript');
+  const [language, setLanguage] = useState('python');
   const [output, setOutput] = useState('');
   const [isExecuting, setIsExecuting] = useState(false);
   
@@ -143,7 +143,7 @@ function App() {
     }
   };
 
-  // Execution Handler
+  // Execution Handler (Manual Run Only)
   const handleRunCode = async () => {
     const codeToRun = mode === 'view' ? selectedSnippet.code : code;
     if (!codeToRun.trim()) return;
@@ -335,7 +335,7 @@ function App() {
               )}
             </div>
 
-            {/* LIVE EXECUTION TERMINAL (Only for Code) */}
+            {/* LIVE EXECUTION TERMINAL (Only for Code in View Mode) */}
             {selectedSnippet.type === 'code' && (
               <div style={{ backgroundColor: '#131317', border: '1px solid #2a2a35', borderRadius: '8px', overflow: 'hidden' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 15px', backgroundColor: '#1e1e24', borderBottom: '1px solid #2a2a35' }}>
@@ -349,13 +349,13 @@ function App() {
                       onChange={(e) => setLanguage(e.target.value)}
                       style={{ padding: '6px', borderRadius: '4px', backgroundColor: '#0e0e11', border: '1px solid #374151', color: '#fff', fontSize: '0.85rem' }}
                     >
-                      <option value="javascript">JavaScript</option>
                       <option value="python">Python 3</option>
+                      <option value="javascript">JavaScript</option>
                       <option value="cpp">C++</option>
                       <option value="c">C</option>
                     </select>
                     <button 
-                      onClick={handleRunCode} 
+                      onClick={() => handleRunCode()} 
                       disabled={isExecuting}
                       style={{ padding: '6px 15px', backgroundColor: '#10b981', color: '#fff', border: 'none', borderRadius: '4px', cursor: isExecuting ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.85rem', fontWeight: 'bold' }}
                     >
@@ -363,7 +363,7 @@ function App() {
                     </button>
                   </div>
                 </div>
-                <div style={{ padding: '15px', minHeight: '120px', backgroundColor: '#0e0e11', color: '#10b981', fontFamily: '"Fira Code", monospace', fontSize: '13px', whiteSpace: 'pre-wrap', overflowX: 'auto' }}>
+                <div style={{ padding: '15px', minHeight: '120px', backgroundColor: '#0e0e11', color: output.includes('[ERROR]') ? '#ef4444' : '#10b981', fontFamily: '"Fira Code", monospace', fontSize: '13px', whiteSpace: 'pre-wrap', overflowX: 'auto' }}>
                   {output || 'Click "Run Code" to execute snippet...'}
                 </div>
               </div>
@@ -431,6 +431,44 @@ function App() {
                   />
                 )}
               </div>
+
+              {/* MANUAL TERMINAL IN EDIT/CREATE MODE */}
+              {snippetType === 'code' && (
+                <div style={{ backgroundColor: '#131317', border: '1px solid #2a2a35', borderRadius: '8px', overflow: 'hidden', marginBottom: '20px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 15px', backgroundColor: '#1e1e24', borderBottom: '1px solid #2a2a35' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                      <FaTerminal color="#6b7280" />
+                      <span style={{ fontSize: '0.9rem', color: '#9ca3af', fontWeight: 'bold' }}>Terminal Output</span>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+                      <select 
+                        value={language} 
+                        onChange={(e) => setLanguage(e.target.value)}
+                        style={{ padding: '6px', borderRadius: '4px', backgroundColor: '#0e0e11', border: '1px solid #374151', color: '#fff', fontSize: '0.85rem' }}
+                      >
+                        <option value="python">Python 3</option>
+                        <option value="javascript">JavaScript</option>
+                        <option value="cpp">C++</option>
+                        <option value="c">C</option>
+                      </select>
+                      
+                      {/* NEW MANUAL RUN BUTTON */}
+                      <button 
+                        type="button" 
+                        onClick={() => handleRunCode()} 
+                        disabled={isExecuting}
+                        style={{ padding: '6px 15px', backgroundColor: '#10b981', color: '#fff', border: 'none', borderRadius: '4px', cursor: isExecuting ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.85rem', fontWeight: 'bold' }}
+                      >
+                        <FaPlay size={10} /> {isExecuting ? 'Running...' : 'Run Code'}
+                      </button>
+
+                    </div>
+                  </div>
+                  <div style={{ padding: '15px', minHeight: '120px', backgroundColor: '#0e0e11', color: output.includes('[ERROR]') ? '#ef4444' : '#10b981', fontFamily: '"Fira Code", monospace', fontSize: '13px', whiteSpace: 'pre-wrap', overflowX: 'auto' }}>
+                    {output || 'Click "Run Code" to execute snippet...'}
+                  </div>
+                </div>
+              )}
 
               {mode === 'create' && (
                 <div style={{ marginBottom: '25px', padding: '15px', backgroundColor: '#1e1e24', borderRadius: '6px', border: '1px dashed #374151' }}>
